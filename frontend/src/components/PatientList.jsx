@@ -1,8 +1,12 @@
-function PatientList({ patients, selected, onSelect }) {
+function PatientList({ patients, selected, loading, onSelect }) {
   return (
     <div style={{ width: 260, borderRight: "1px solid #eee", height: "100vh", overflowY: "auto", padding: 16 }}>
       <h3 style={{ marginBottom: 12, color: "#555", fontSize: 13, textTransform: "uppercase" }}>Patients</h3>
-      {patients.map(p => (
+      {loading ? (
+        <p style={{ fontSize: 13, color: "#aaa" }}>Loading...</p>
+      ) : patients.length === 0 ? (
+        <p style={{ fontSize: 13, color: "#aaa" }}>No patients yet.</p>
+      ) : patients.map(p => (
         <div
           key={p._id}
           onClick={() => onSelect(p)}

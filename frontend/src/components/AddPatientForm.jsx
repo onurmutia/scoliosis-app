@@ -1,5 +1,5 @@
 import { useState } from "react"
-import axios from "axios"
+import { addPatient } from "../api"
 
 function AddPatientForm({ onAdded }) {
   const [form, setForm] = useState({
@@ -8,15 +8,22 @@ function AddPatientForm({ onAdded }) {
     rissersSign: 0, initialCobbAngle: 0, treatmentPlan: "Observation",
     braceType: "", braceHoursPerDay: 0, physicalTherapy: false
   })
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async () => {
     if (!form.firstName || !form.lastName) return alert("Please enter first and last name")
+    if (!form.dateOfBirth) return alert("Please enter date of birth")
+    if (form.rissersSign < 0 || form.rissersSign > 5) return alert("Risser sign must be between 0 and 5")
+    if (form.initialCobbAngle <= 0) return alert("Initial Cobb angle must be greater than 0")
+    setLoading(true)
     try {
-      await axios.post("http://localhost:8000/api/patients", { ...form, visits: [] })
+      await addPatient({ ...form, visits: [] })
       alert("Patient added successfully!")
       onAdded()
     } catch (e) {
       alert("Error: " + e.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -75,9 +82,13 @@ function AddPatientForm({ onAdded }) {
         </div>
       </div>
 
-      <button onClick={handleSubmit}
-        style={{ background: "#4f46e5", color: "white", border: "none", padding: "10px 28px", borderRadius: 8, fontSize: 14, cursor: "pointer" }}>
-        Save Patient
+      <button onClick={handleSubmit} disabled={loading}
+        style={{
+          background: loading ? "#a5b4fc" : "#4f46e5", color: "white",
+          border: "none", padding: "10px 28px", borderRadius: 8,
+          fontSize: 14, cursor: loading ? "not-allowed" : "pointer"
+        }}>
+        {loading ? "Saving..." : "Save Patient"}
       </button>
     </div>
   )

@@ -1,5 +1,7 @@
 import { useState } from "react"
-import axios from "axios"
+import { uploadPhoto } from "../api"
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
 function PhotoUpload({ patient, onDone }) {
   const [preview, setPreview] = useState(patient.photo || null)
@@ -9,27 +11,29 @@ function PhotoUpload({ patient, onDone }) {
   const handleFile = (e) => {
     const f = e.target.files[0]
     if (!f) return
+    if (f.size > MAX_FILE_SIZE) {
+      alert("Photo must be smaller than 5MB")
+      e.target.value = ""
+      return
+    }
     setFile(f)
     setPreview(URL.createObjectURL(f))
   }
 
- const handleUpload = async () => {
+  const handleUpload = async () => {
     if (!file) return alert("Please select a photo first")
     setLoading(true)
     try {
       const formData = new FormData()
       formData.append("file", file)
-      await axios.post(
-        `http://localhost:8000/api/patients/${patient._id}/photo`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      )
+      await uploadPhoto(patient._id, formData)
       alert("Photo uploaded! Click OK to refresh.")
       onDone()
     } catch (e) {
       alert("Error: " + e.message)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -53,11 +57,12 @@ function PhotoUpload({ patient, onDone }) {
       <label style={{
         display: "inline-block", padding: "8px 20px", borderRadius: 8,
         border: "1px solid #ddd", cursor: "pointer", fontSize: 14,
-        marginBottom: 14, background: "#f9f9f9"
+        marginBottom: 4, background: "#f9f9f9"
       }}>
         Choose Photo
         <input type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
       </label>
+      <p style={{ fontSize: 11, color: "#aaa", marginBottom: 14 }}>Max 5MB</p>
 
       {file && (
         <p style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>
@@ -74,7 +79,7 @@ function PhotoUpload({ patient, onDone }) {
           }}>
           {loading ? "Uploading..." : "Save Photo"}
         </button>
-        <button onClick={onDone}
+        <button onClick={onDone} disabled={loading}
           style={{
             background: "white", color: "#555", border: "1px solid #ddd",
             padding: "10px 24px", borderRadius: 8, fontSize: 14, cursor: "pointer"
